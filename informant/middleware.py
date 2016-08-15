@@ -150,15 +150,10 @@ class Informant(object):
                 metrics.append("%ssrt.%s:%d|ms|@%s" %
                                (self.metric_name_prepend, name,
                                 start_response_time, self.statsd_sample_rate))
-                metrics.append("%stotal_duration.%s:%d|ms|@%s" %
-                               (self.metric_name_prepend, name, total_duration,
-                                self.statsd_sample_rate))
-                metrics.append("%stotal_srt.%s:%d|ms|@%s" %
-                               (self.metric_name_prepend, name,
-                                total_start_response_time, self.statsd_sample_rate))
-                metrics.append("%sratelimit.%s:%d|ms|@%s" %
-                               (self.metric_name_prepend, name, ratelimit_sleep,
-                                self.statsd_sample_rate))
+                if ratelimit_sleep > 0:
+                    metrics.append("%sratelimit.%s:%d|ms|@%s" %
+                                   (self.metric_name_prepend, name, ratelimit_sleep,
+                                    self.statsd_sample_rate))
                 metrics.append("%stfer.%s:%s|c|@%s" %
                                (self.metric_name_prepend, name, transferred,
                                 self.statsd_sample_rate))
@@ -175,18 +170,11 @@ class Informant(object):
                                    (self.prefix_accounts_metric_prepend,
                                     acct, name, start_response_time,
                                     self.statsd_sample_rate))
-                    metrics.append("%s%s.total_duration.%s:%d|ms|@%s" %
-                                   (self.prefix_accounts_metric_prepend,
-                                    acct, stat_type, total_duration,
-                                    self.statsd_sample_rate))
-                    metrics.append("%s%s.ratelimit.%s:%d|ms|@%s" %
-                                   (self.prefix_accounts_metric_prepend,
-                                    acct, stat_type, ratelimit_sleep,
-                                    self.statsd_sample_rate))
-                    metrics.append("%s%s.total_srt.%s:%d|ms|@%s" %
-                                   (self.prefix_accounts_metric_prepend,
-                                    acct, name, total_start_response_time,
-                                    self.statsd_sample_rate))
+                    if ratelimit_sleep > 0:
+                        metrics.append("%s%s.ratelimit.%s:%d|ms|@%s" %
+                                       (self.prefix_accounts_metric_prepend,
+                                        acct, stat_type, ratelimit_sleep,
+                                        self.statsd_sample_rate))
                 self._send_events(metrics, self.combined_events)
         except Exception:
             try:
