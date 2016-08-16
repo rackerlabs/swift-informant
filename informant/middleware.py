@@ -97,16 +97,21 @@ class Informant(object):
                     #because something else blew up but we don't know for sure.
                     status_int = 599
                 if 'informant.start_time' in env:
-                    duration = (time() - env['informant.start_time']) * 1000
+                    total_duration = (time() - env['informant.start_time']) * 1000
                     if 'informant.start_response_time' in env:
-                        start_response_time = \
+                        total_start_response_time = \
                             (env['informant.start_response_time'] -
                              env['informant.start_time']) * 1000
                     else:
-                        start_response_time = 0
+                        total_start_response_time = 0
                 else:
-                    duration = 0
-                    start_response_time = 0
+                    total_duration = 0
+                    total_start_response_time = 0
+                ratelimit_sleep = 0
+                if 'swift.ratelimit.sleep_duration' in env:
+                    ratelimit_sleep = env['swift.ratelimit.sleep_duration'] * 1000
+                duration = total_duration - ratelimit_sleep
+                start_response_time = total_start_response_time - ratelimit_sleep
                 transferred = getattr(req, 'bytes_transferred', 0)
                 if transferred is '-' or transferred is 0:
                     transferred = getattr(response, 'bytes_transferred', 0)
@@ -145,6 +150,10 @@ class Informant(object):
                 metrics.append("%ssrt.%s:%d|ms|@%s" %
                                (self.metric_name_prepend, name,
                                 start_response_time, self.statsd_sample_rate))
+                if ratelimit_sleep > 0:
+                    metrics.append("%sratelimit.%s:%d|ms|@%s" %
+                                   (self.metric_name_prepend, name, ratelimit_sleep,
+                                    self.statsd_sample_rate))
                 metrics.append("%stfer.%s:%s|c|@%s" %
                                (self.metric_name_prepend, name, transferred,
                                 self.statsd_sample_rate))
@@ -161,6 +170,11 @@ class Informant(object):
                                    (self.prefix_accounts_metric_prepend,
                                     acct, name, start_response_time,
                                     self.statsd_sample_rate))
+                    if ratelimit_sleep > 0:
+                        metrics.append("%s%s.ratelimit.%s:%d|ms|@%s" %
+                                       (self.prefix_accounts_metric_prepend,
+                                        acct, stat_type, ratelimit_sleep,
+                                        self.statsd_sample_rate))
                 self._send_events(metrics, self.combined_events)
         except Exception:
             try:
