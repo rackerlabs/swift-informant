@@ -108,7 +108,7 @@ class Informant(object):
                     total_duration = 0
                     total_start_response_time = 0
                 ratelimit_sleep = 0
-                if 'ratelimit.sleep_duration' in env:
+                if 'swift.ratelimit.sleep_duration' in env:
                     ratelimit_sleep = env['swift.ratelimit.sleep_duration'] * 1000
                 duration = total_duration - ratelimit_sleep
                 start_response_time = total_start_response_time - ratelimit_sleep
